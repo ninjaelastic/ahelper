@@ -5,7 +5,7 @@ import (
 	"io/fs"
 	"path/filepath"
 
-	"github.com/ninjaelastic/ahelpers/internal/filter"
+	"github.com/ninjaelastic/ahelper/internal/filter"
 )
 
 func (p *Processor) processDirectory(path string) error {

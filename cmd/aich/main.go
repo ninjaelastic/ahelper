@@ -6,8 +6,8 @@ import (
 	"log"
 	"os"
 
+	"github.com/ninjaelastic/ahelper/internal/filter"
 	"github.com/ninjaelastic/ahelper/internal/processor"
-	"github.com/ninjaelastic/ahelpers/internal/filter"
 )
 
 func main() {

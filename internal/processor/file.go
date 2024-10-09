@@ -5,8 +5,8 @@ import (
 	"io/ioutil"
 	"path/filepath"
 
-	"github.com/ninjaelastic/ahelpers/internal/display"
-	"github.com/ninjaelastic/ahelpers/internal/filter"
+	"github.com/ninjaelastic/ahelper/internal/display"
+	"github.com/ninjaelastic/ahelper/internal/filter"
 )
 
 func (p *Processor) processFile(path string) error {
