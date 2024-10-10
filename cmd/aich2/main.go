@@ -4,8 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"path/filepath"
-	"strings"
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/ninjaelastic/ahelper/internal/filter"
@@ -112,13 +110,13 @@ func showHelp() {
 	fmt.Println(styleOption.Render("For more information and updates, visit: https://github.com/ninjaelastic/aich"))
 }
 
-func Run(recursive bool, ignorePatterns, includePatterns string, showTree, help bool, paths []string) error {
+func Run(recursive bool, ignorePatterns, includePatterns string, showTree, help bool, args []string) error {
 	if help {
 		showHelp()
 		return nil
 	}
 
-	if len(paths) == 0 {
+	if len(args) == 0 {
 		showHelp()
 		fmt.Println(styleError.Render("Error: No paths provided."))
 		fmt.Println("Run 'aich -h' for usage information.")
@@ -126,7 +124,6 @@ func Run(recursive bool, ignorePatterns, includePatterns string, showTree, help 
 	}
 
 	additionalIgnorePatterns := filter.SplitPatterns(ignorePatterns)
-
 	proc := processor.New(
 		recursive,
 		additionalIgnorePatterns,
@@ -134,7 +131,7 @@ func Run(recursive bool, ignorePatterns, includePatterns string, showTree, help 
 		showTree,
 	)
 
-	if err := proc.Run(paths); err != nil {
+	if err := proc.Run(args); err != nil {
 		fmt.Println(styleError.Render(fmt.Sprintf("Error: %v", err)))
 		return err
 	}
@@ -144,70 +141,16 @@ func Run(recursive bool, ignorePatterns, includePatterns string, showTree, help 
 }
 
 func main() {
-	var (
-		recursive          bool
-		ignorePatterns     string
-		includePatterns    string
-		showTree           bool
-		showIgnorePatterns bool
-		help               bool
-	)
-
-	flag.BoolVar(&recursive, "r", true, "Include subfolders recursively")
-	flag.StringVar(&ignorePatterns, "i", "", "Comma-separated list of additional ignore patterns")
-	flag.StringVar(&includePatterns, "I", "", "Comma-separated list of include patterns")
-	flag.BoolVar(&showTree, "t", false, "Display directory tree structure")
-	flag.BoolVar(&showIgnorePatterns, "show-ignore", false, "Display default ignore patterns")
-	flag.BoolVar(&help, "h", false, "Show help message")
+	recursive := flag.Bool("r", true, "Include subfolders recursively")
+	ignorePatterns := flag.String("i", "", "Comma-separated list of additional ignore patterns")
+	includePatterns := flag.String("I", "", "Comma-separated list of include patterns")
+	showTree := flag.Bool("t", false, "Display directory tree structure")
+	showIgnorePatterns := flag.Bool("show-ignore", false, "Display default ignore patterns")
+	help := flag.Bool("h", false, "Show help message")
 
 	flag.Parse()
 
-	// Convert all flags to lowercase
-	flag.VisitAll(func(f *flag.Flag) {
-		f.Name = strings.ToLower(f.Name)
-	})
-
-	args := flag.Args()
-	var paths []string
-
-	// Separate paths from flags
-	for i := 0; i < len(args); i++ {
-		arg := args[i]
-		if strings.HasPrefix(arg, "-") {
-			// Process flag
-			name := strings.TrimLeft(arg, "-")
-			f := flag.Lookup(strings.ToLower(name))
-			if f == nil {
-				fmt.Printf("Unknown flag: %s\n", arg)
-				continue
-			}
-			if f.Value.String() == "true" || f.Value.String() == "false" {
-				// Boolean flag
-				if i+1 < len(args) && !strings.HasPrefix(args[i+1], "-") {
-					f.Value.Set(args[i+1])
-					i++
-				} else {
-					f.Value.Set("true")
-				}
-			} else {
-				// Non-boolean flag
-				if i+1 < len(args) {
-					f.Value.Set(args[i+1])
-					i++
-				}
-			}
-		} else {
-			// Process path
-			absPath, err := filepath.Abs(arg)
-			if err != nil {
-				fmt.Printf("Error resolving path %s: %v\n", arg, err)
-				continue
-			}
-			paths = append(paths, absPath)
-		}
-	}
-
-	if help || len(paths) == 0 {
+	if *help || len(flag.Args()) == 0 {
 		showHelp()
 		return
 	}
@@ -215,21 +158,20 @@ func main() {
 	showLogo()
 
 	fmt.Printf("Processing with options:\n")
-	fmt.Printf("  Recursive: %v\n", recursive)
-	fmt.Printf("  Additional ignore patterns: %s\n", ignorePatterns)
-	fmt.Printf("  Include patterns: %s\n", includePatterns)
-	fmt.Printf("  Show tree: %v\n", showTree)
-	fmt.Printf("  Paths: %v\n", paths)
+	fmt.Printf("  Recursive: %v\n", *recursive)
+	fmt.Printf("  Additional ignore patterns: %s\n", *ignorePatterns)
+	fmt.Printf("  Include patterns: %s\n", *includePatterns)
+	fmt.Printf("  Show tree: %v\n", *showTree)
+	fmt.Printf("  Paths: %v\n", flag.Args())
 
-	if showIgnorePatterns {
+	if *showIgnorePatterns {
 		fmt.Printf("\nDefault ignore patterns:\n")
 		for _, pattern := range processor.DefaultIgnorePatterns {
 			fmt.Printf("  %s\n", pattern)
 		}
 		fmt.Printf("\nTo override default ignore patterns, use the -i flag with an empty string: -i \"\"\n\n")
 	}
-
-	if err := Run(recursive, ignorePatterns, includePatterns, showTree, help, paths); err != nil {
+	if err := Run(*recursive, *ignorePatterns, *includePatterns, *showTree, *help, flag.Args()); err != nil {
 		fmt.Printf("%s\n", styleError.Render(fmt.Sprintf("Error: %v", err)))
 		os.Exit(1)
 	}

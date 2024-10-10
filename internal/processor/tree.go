@@ -19,6 +19,10 @@ func (p *Processor) printTreeHelper(path string, prefix string, isLast bool) err
 		return err
 	}
 
+	if filter.IsIgnored(path, p.ignorePatterns) {
+		return nil
+	}
+
 	fmt.Print(prefix)
 	if isLast {
 		fmt.Print("└── ")
@@ -37,7 +41,8 @@ func (p *Processor) printTreeHelper(path string, prefix string, isLast bool) err
 
 		var filteredEntries []os.DirEntry
 		for _, entry := range entries {
-			if !filter.IsIgnored(filepath.Join(path, entry.Name()), p.ignorePatterns) {
+			entryPath := filepath.Join(path, entry.Name())
+			if !filter.IsIgnored(entryPath, p.ignorePatterns) {
 				filteredEntries = append(filteredEntries, entry)
 			}
 		}

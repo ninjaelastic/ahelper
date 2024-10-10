@@ -11,10 +11,8 @@ func SplitPatterns(patterns string) []string {
 
 func IsIgnored(path string, ignorePatterns []string) bool {
 	for _, pattern := range ignorePatterns {
-		if matched, _ := filepath.Match(pattern, filepath.Base(path)); matched {
-			return true
-		}
-		if strings.Contains(path, pattern) {
+		if matchPattern(path, pattern) {
+
 			return true
 		}
 	}
@@ -26,9 +24,24 @@ func IsIncluded(path string, includePatterns []string) bool {
 		return true
 	}
 	for _, pattern := range includePatterns {
-		if matched, _ := filepath.Match(pattern, filepath.Base(path)); matched {
+		if matchPattern(path, pattern) {
 			return true
 		}
 	}
 	return false
+}
+
+func matchPattern(path, pattern string) bool {
+	// Check if the pattern is a directory pattern (ends with '/')
+	if strings.HasSuffix(pattern, "/") {
+		return strings.Contains(path, pattern)
+	}
+
+	// Check if the pattern matches the base name
+	if matched, _ := filepath.Match(pattern, filepath.Base(path)); matched {
+		return true
+	}
+
+	// Check if the pattern is anywhere in the path
+	return strings.Contains(path, pattern)
 }
